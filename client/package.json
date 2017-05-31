@@ -18,6 +18,7 @@
 		"react-apollo": "^1.4.2",
 		"react-native": "0.44.3",
 		"react-native-alphabetlistview": "^0.2.0",
+		"react-native-reversed-flat-list": "^1.0.1",
 		"react-native-vector-icons": "^4.2.0",
 		"react-navigation": "^1.0.0-beta.11",
 		"react-redux": "^5.0.5",

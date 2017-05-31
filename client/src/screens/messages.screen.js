@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  FlatList,
   Image,
   KeyboardAvoidingView,
   StyleSheet,
@@ -12,6 +11,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import randomColor from 'randomcolor';
 import { graphql, compose } from 'react-apollo';
+import ReversedFlatList from 'react-native-reversed-flat-list';
 
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
@@ -82,10 +82,12 @@ class Messages extends Component {
     super(props);
     this.state = {
       usernameColors: {},
+      refreshing: false,
     };
 
     this.renderItem = this.renderItem.bind(this);
     this.send = this.send.bind(this);
+    this.onEndReached = this.onEndReached.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -105,13 +107,17 @@ class Messages extends Component {
     }
   }
 
+  onEndReached() {
+    console.log('TODO: onEndReached');
+  }
+
   send(text) {
     this.props.createMessage({
       groupId: this.props.navigation.state.params.groupId,
       userId: 1, // faking the user for now
       text,
     }).then(() => {
-      this.flatList.scrollToEnd({ animated: true });
+      this.flatList.scrollToBottom({ animated: true });
     });
   }
 
@@ -145,11 +151,12 @@ class Messages extends Component {
         keyboardVerticalOffset={64}
         style={styles.container}
       >
-        <FlatList
+        <ReversedFlatList
           ref={(ref) => { this.flatList = ref; }}
           data={group.messages.slice().reverse()}
           keyExtractor={this.keyExtractor}
           renderItem={this.renderItem}
+          onEndReached={this.onEndReached}
         />
         <MessageInput send={this.send} />
       </KeyboardAvoidingView>
