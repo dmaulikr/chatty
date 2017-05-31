@@ -12,6 +12,7 @@ import React, { Component } from 'react';
 import randomColor from 'randomcolor';
 import { graphql, compose } from 'react-apollo';
 import ReversedFlatList from 'react-native-reversed-flat-list';
+import update from 'immutability-helper';
 
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
@@ -181,14 +182,39 @@ Messages.propTypes = {
   loading: PropTypes.bool,
 };
 
+const ITEMS_PER_PAGE = 10;
 const groupQuery = graphql(GROUP_QUERY, {
   options: ownProps => ({
     variables: {
       groupId: ownProps.navigation.state.params.groupId,
+      offset: 0,
+      limit: ITEMS_PER_PAGE,
     },
   }),
-  props: ({ data: { loading, group } }) => ({
-    loading, group,
+  props: ({ data: { fetchMore, loading, group } }) => ({
+    loading,
+    group,
+    loadMoreEntries() {
+      return fetchMore({
+        // query: ... (you can specify a different query.
+        // GROUP_QUERY is used by default)
+        variables: {
+          // We are able to figure out offset because it matches
+          // the current messages length
+          offset: group.messages.length,
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          // we will make an extra call to check if no more entries
+          if (!fetchMoreResult) { return previousResult; }
+          // push results (older messages) to end of messages list
+          return update(previousResult, {
+            group: {
+              messages: { $push: fetchMoreResult.group.messages },
+            },
+          });
+        },
+      });
+    },
   }),
 });
 
@@ -221,6 +247,8 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
             query: GROUP_QUERY,
             variables: {
               groupId,
+              offset: 0,
+              limit: ITEMS_PER_PAGE,
             },
           });
 
@@ -236,6 +264,8 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
             query: GROUP_QUERY,
             variables: {
               groupId,
+              offset: 0,
+              limit: ITEMS_PER_PAGE,
             },
             data,
           });
