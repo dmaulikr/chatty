@@ -27,6 +27,11 @@ const styles = StyleSheet.create({
   },
 });
 
+function isDuplicateMessage(newMessage, existingMessages) {
+  return newMessage.id !== null &&
+    existingMessages.some(message => newMessage.id === message.id);
+}
+
 class Messages extends Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
@@ -143,7 +148,33 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
     createMessage: ({ text, userId, groupId }) =>
       mutate({
         variables: { text, userId, groupId },
+        update: (store, { data: { createMessage } }) => {
+          // Read the data from our cache for this query.
+          const data = store.readQuery({
+            query: GROUP_QUERY,
+            variables: {
+              groupId,
+            },
+          });
+
+          if (isDuplicateMessage(createMessage, data.group.messages)) {
+            return data;
+          }
+
+          // Add our message from the mutation to the end.
+          data.group.messages.unshift(createMessage);
+
+          // Write our data back to the cache.
+          store.writeQuery({
+            query: GROUP_QUERY,
+            variables: {
+              groupId,
+            },
+            data,
+          });
+        },
       }),
+
   }),
 });
 
