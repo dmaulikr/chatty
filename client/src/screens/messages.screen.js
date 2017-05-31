@@ -83,7 +83,6 @@ class Messages extends Component {
     super(props);
     this.state = {
       usernameColors: {},
-      refreshing: false,
     };
 
     this.renderItem = this.renderItem.bind(this);
@@ -109,7 +108,7 @@ class Messages extends Component {
   }
 
   onEndReached() {
-    console.log('TODO: onEndReached');
+    this.props.loadMoreEntries();
   }
 
   send(text) {
@@ -180,6 +179,7 @@ Messages.propTypes = {
     users: PropTypes.array,
   }),
   loading: PropTypes.bool,
+  loadMoreEntries: PropTypes.func,
 };
 
 const ITEMS_PER_PAGE = 10;
