@@ -69,10 +69,12 @@ export const Resolvers = {
     users(group) {
       return group.getUsers();
     },
-    messages(group) {
+    messages(group, args) {
       return Message.findAll({
         where: { groupId: group.id },
         order: [['createdAt', 'DESC']],
+        limit: args.limit,
+        offset: args.offset,
       });
     },
   },
