@@ -61,11 +61,13 @@ networkInterface.useAfter([{
 }]);
 
 // Create WebSocket client
-const wsClient = new SubscriptionClient('ws://localhost:8080/subscriptions', {
+export const wsClient = new SubscriptionClient('ws://localhost:8080/subscriptions', {
   reconnect: true,
-  connectionParams: {
-    // Pass any arguments you want for initialization
+  connectionParams() {
+    // get the authentication token from local storage if it exists
+    return { jwt: store.getState().auth.jwt };
   },
+  lazy: true,
 });
 
 // Extend the network interface with the WebSocket
