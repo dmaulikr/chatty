@@ -13,6 +13,7 @@ import React, { Component } from 'react';
 import randomColor from 'randomcolor';
 import { graphql, compose } from 'react-apollo';
 import update from 'immutability-helper';
+import { connect } from 'react-redux';
 
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
@@ -158,7 +159,6 @@ class Messages extends Component {
   send(text) {
     this.props.createMessage({
       groupId: this.props.navigation.state.params.groupId,
-      userId: 1, // faking the user for now
       text,
     }).then(() => {
       this.flatList.scrollToIndex({ index: 0, animated: true });
@@ -170,7 +170,7 @@ class Messages extends Component {
   renderItem = ({ item: message }) => (
     <Message
       color={this.state.usernameColors[message.from.username]}
-      isCurrentUser={message.from.id === 1} // for now until we implement auth
+      isCurrentUser={message.from.id === this.props.auth.id}
       message={message}
     />
   )
@@ -211,6 +211,10 @@ class Messages extends Component {
 }
 
 Messages.propTypes = {
+  auth: PropTypes.shape({
+    id: PropTypes.number,
+    username: PropTypes.string,
+  }),
   createMessage: PropTypes.func,
   navigation: PropTypes.shape({
     navigate: PropTypes.func,
@@ -267,10 +271,10 @@ const groupQuery = graphql(GROUP_QUERY, {
 });
 
 const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
-  props: ({ mutate }) => ({
-    createMessage: ({ text, userId, groupId }) =>
+  props: ({ ownProps, mutate }) => ({
+    createMessage: ({ text, groupId }) =>
       mutate({
-        variables: { text, userId, groupId },
+        variables: { text, groupId },
         optimisticResponse: {
           __typename: 'Mutation',
           createMessage: {
@@ -280,8 +284,8 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
             createdAt: new Date().toISOString(), // the time is now!
             from: {
               __typename: 'User',
-              id: 1, // still faking the user
-              username: 'Justyn.Kautzer', // still faking the user
+              id: ownProps.auth.id,
+              username: ownProps.auth.username,
             },
             to: {
               __typename: 'Group',
@@ -323,7 +327,12 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
   }),
 });
 
+const mapStateToProps = ({ auth }) => ({
+  auth,
+});
+
 export default compose(
+  connect(mapStateToProps),
   groupQuery,
   createMessageMutation,
 )(Messages);
