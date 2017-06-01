@@ -99,8 +99,15 @@ export const groupLogic = {
           Promise.reject('No group found');
         }
 
-        group.removeUser(user.id);
-        return Promise.resolve({ id });
+        return group.removeUser(user.id)
+          .then(() => group.getUsers())
+          .then((users) => {
+            // if the last user is leaving, remove the group
+            if (!users.length) {
+              group.destroy();
+            }
+            return { id };
+          });
       });
     });
   },
