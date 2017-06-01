@@ -1,3 +1,8 @@
+import { addMockFunctionsToSchema, makeExecutableSchema } from 'graphql-tools';
+
+import { Mocks } from './mocks';
+import { Resolvers } from './resolvers';
+
 export const Schema = [`
   # declare custom scalars
   scalar Date
@@ -66,4 +71,15 @@ export const Schema = [`
   }
 `];
 
-export default Schema;
+export const executableSchema = makeExecutableSchema({
+  typeDefs: Schema,
+  resolvers: Resolvers,
+});
+
+// addMockFunctionsToSchema({
+//   schema: executableSchema,
+//   mocks: Mocks,
+//   preserveResolvers: true,
+// });
+
+export default executableSchema;
