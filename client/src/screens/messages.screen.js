@@ -272,15 +272,15 @@ const groupQuery = graphql(GROUP_QUERY, {
 
 const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
   props: ({ ownProps, mutate }) => ({
-    createMessage: ({ text, groupId }) =>
+    createMessage: message =>
       mutate({
-        variables: { text, groupId },
+        variables: { message },
         optimisticResponse: {
           __typename: 'Mutation',
           createMessage: {
             __typename: 'Message',
             id: -1, // don't know id yet, but it doesn't matter
-            text, // we know what the text will be
+            text: message.text, // we know what the text will be
             createdAt: new Date().toISOString(), // the time is now!
             from: {
               __typename: 'User',
@@ -289,7 +289,7 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
             },
             to: {
               __typename: 'Group',
-              id: groupId,
+              id: message.groupId,
             },
           },
         },
@@ -298,7 +298,7 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
           const data = store.readQuery({
             query: GROUP_QUERY,
             variables: {
-              groupId,
+              groupId: message.groupId,
               offset: 0,
               limit: ITEMS_PER_PAGE,
             },
@@ -315,7 +315,7 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
           store.writeQuery({
             query: GROUP_QUERY,
             variables: {
-              groupId,
+              groupId: message.groupId,
               offset: 0,
               limit: ITEMS_PER_PAGE,
             },
