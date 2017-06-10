@@ -7,6 +7,26 @@ export const Schema = [`
   # declare custom scalars
   scalar Date
 
+  # input for creating messages
+  input MessageInput {
+    groupId: Int!
+    text: String!
+  }
+
+  # input for creating groups
+  input GroupInput {
+    id: Int # optional input for use with updateGroup
+    name: String!
+    userIds: [Int!]
+  }
+
+  # input for creating users or logging in
+  input UserInput {
+    email: String!
+    password: String!
+    username: String
+  }
+
   # a group chat entity
   type Group {
     id: Int! # unique id for the group
@@ -50,13 +70,13 @@ export const Schema = [`
 
   type Mutation {
     # send a message to a group
-    createMessage(text: String!, groupId: Int!): Message
-    createGroup(name: String!, userIds: [Int]): Group
+    createMessage(message: MessageInput!): Message
+    createGroup(group: GroupInput!): Group
     deleteGroup(id: Int!): Group
     leaveGroup(id: Int!): Group # let user leave group
-    updateGroup(id: Int!, name: String): Group
-    login(email: String!, password: String!): User
-    signup(email: String!, password: String!, username: String): User
+    updateGroup(group: GroupInput!): Group
+    login(user: UserInput!): User
+    signup(user: UserInput!): User
   }
 
   type Subscription {
