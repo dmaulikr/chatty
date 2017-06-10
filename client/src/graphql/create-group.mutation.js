@@ -3,8 +3,8 @@ import gql from 'graphql-tag';
 import GROUP_FRAGMENT from './group.fragment';
 
 const CREATE_GROUP_MUTATION = gql`
-  mutation createGroup($name: String!, $userIds: [Int!], $limit: Int = 1, $offset: Int = 0) {
-    createGroup(name: $name, userIds: $userIds) {
+  mutation createGroup($group: GroupInput!, $limit: Int = 1, $offset: Int = 0) {
+    createGroup(group: $group) {
       ... GroupFragment
     }
   }
