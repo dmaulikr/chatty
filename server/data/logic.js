@@ -17,7 +17,9 @@ export const messageLogic = {
   to(message) {
     return message.getGroup({ attributes: ['id', 'name'] });
   },
-  createMessage(_, { text, groupId }, ctx) {
+  createMessage(_, messageInput, ctx) {
+    const { text, groupId } = messageInput.message;
+
     return getAuthenticatedUser(ctx)
       .then(user => user.getGroups({ where: { id: groupId }, attributes: ['id'] })
       .then((group) => {
@@ -54,7 +56,9 @@ export const groupLogic = {
       }],
     }));
   },
-  createGroup(_, { name, userIds }, ctx) {
+  createGroup(_, groupInput, ctx) {
+    const { name, userIds } = groupInput.group;
+
     return getAuthenticatedUser(ctx)
       .then(user => user.getFriends({ where: { id: { $in: userIds } } })
       .then((friends) => {  // eslint-disable-line arrow-body-style
@@ -104,7 +108,9 @@ export const groupLogic = {
       });
     });
   },
-  updateGroup(_, { id, name }, ctx) {
+  updateGroup(_, groupInput, ctx) {
+    const { id, name } = groupInput.group;
+
     return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
       return Group.findOne({
         where: { id },
