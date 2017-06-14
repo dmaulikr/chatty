@@ -1,4 +1,6 @@
+import { map, compact, reject } from 'lodash';
 import { Group, Message, User } from './connectors';
+import { sendNotification } from '../notifications';
 
 // reusable function to check for a user with context
 function getAuthenticatedUser(ctx) {
@@ -27,13 +29,42 @@ export const messageLogic = {
     const { text, groupId } = messageInput.message;
 
     return getAuthenticatedUser(ctx)
-      .then(user => user.getGroups({ where: { id: groupId }, attributes: ['id'] })
-      .then((group) => {
-        if (group.length) {
+      .then(user => user.getGroups({ where: { id: groupId } })
+      .then((groups) => {
+        if (groups.length) {
           return Message.create({
             userId: user.id,
             text,
             groupId,
+          }).then((message) => {
+            const group = groups[0];
+            group.getUsers({ attributes: ['id', 'registrationId'] }).then((users) => {
+              const registration_ids = compact(map(reject(users, ['id', user.id]), 'registrationId'));
+              console.log('registration_ids', registration_ids);
+              if (registration_ids.length) {
+                sendNotification({
+                  registration_ids,
+                  notification: {
+                    title: `${user.username} @ ${group.name}`,
+                    body: text,
+                    sound: 'default', // can use custom sounds -- see https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/SupportingNotificationsinYourApp.html#//apple_ref/doc/uid/TP40008194-CH4-SW10
+                    click_action: 'openGroup',
+                  },
+                  data: {
+                    title: `${user.username} @ ${group.name}`,
+                    body: text,
+                    type: 'MESSAGE_ADDED',
+                    group: {
+                      id: group.id,
+                      name: group.name,
+                    },
+                  },
+                  priority: 'high', // will wake sleeping device
+                });
+              }
+            });
+
+            return message;
           });
         }
         return Promise.reject('Unauthorized');
