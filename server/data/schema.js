@@ -26,6 +26,7 @@ export const Schema = [`
     email: String!
     password: String!
     username: String
+    registrationId: String
   }
 
   # a group chat entity
@@ -47,6 +48,7 @@ export const Schema = [`
     groups: [Group] # groups the user belongs to
     friends: [User] # user's friends/contacts
     jwt: String # json web token for access
+    registrationId: String
   }
 
   # a message sent from a user to a group
@@ -78,6 +80,7 @@ export const Schema = [`
     deleteGroup(id: Int!): Group
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(group: GroupInput!): Group
+    updateUser(registrationId: String): User # update registration for user
     login(user: UserInput!): User
     signup(user: UserInput!): User
   }
