@@ -215,6 +215,15 @@ export const userLogic = {
       });
     });
   },
+  registrationId(user, args, ctx) {
+    return getAuthenticatedUser(ctx).then((currentUser) => {
+      if (currentUser.id === user.id) {
+        return currentUser.registrationId;
+      }
+
+      return Promise.reject('Unauthorized');
+    });
+  },
   query(_, args, ctx) {
     return getAuthenticatedUser(ctx).then((user) => {
       if (user.id === args.id || user.email === args.email) {
@@ -222,6 +231,11 @@ export const userLogic = {
       }
 
       return Promise.reject('Unauthorized');
+    });
+  },
+  updateUser(_, { registrationId = null }, ctx) {
+    return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
+      return user.update({ registrationId });
     });
   },
 };
