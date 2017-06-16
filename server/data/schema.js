@@ -42,6 +42,7 @@ export const Schema = [`
   # a user -- keep type really simple for now
   type User {
     id: Int! # unique id for the user
+    badgeCount: Int # number of unread notifications
     email: String! # we will also require a unique email per user
     username: String # this is the name we'll show other users
     messages: [Message] # messages sent by user
@@ -80,7 +81,7 @@ export const Schema = [`
     deleteGroup(id: Int!): Group
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(group: GroupInput!): Group
-    updateUser(registrationId: String): User # update registration for user
+    updateUser(registrationId: String, badgeCount: Int): User
     login(user: UserInput!): User
     signup(user: UserInput!): User
   }
