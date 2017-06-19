@@ -14,12 +14,14 @@ import { graphql, compose } from 'react-apollo';
 import ReversedFlatList from 'react-native-reversed-flat-list';
 import update from 'immutability-helper';
 import { connect } from 'react-redux';
+import gql from 'graphql-tag';
 
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
 import GROUP_QUERY from '../graphql/group.query';
 import CREATE_MESSAGE_MUTATION from '../graphql/create-message.mutation';
 import MESSAGE_ADDED_SUBSCRIPTION from '../graphql/message-added.subscription';
+import UPDATE_GROUP_MUTATION from '../graphql/update-group.mutation';
 
 const styles = StyleSheet.create({
   container: {
@@ -96,6 +98,12 @@ class Messages extends Component {
     const usernameColors = {};
     // check for new messages
     if (nextProps.group) {
+      if (nextProps.group.messages && nextProps.group.messages.length && nextProps.group.messages[0].id >= 0 &&
+        (!nextProps.group.lastRead || nextProps.group.lastRead.id !== nextProps.group.messages[0].id)) {
+        const { group } = nextProps;
+        nextProps.updateGroup({ id: group.id, name: group.name, lastRead: group.messages[0].id });
+      }
+
       if (nextProps.group.users) {
         // apply a color to each user
         nextProps.group.users.forEach((user) => {
@@ -207,12 +215,16 @@ Messages.propTypes = {
     }),
   }),
   group: PropTypes.shape({
+    lastRead: PropTypes.shape({
+      id: PropTypes.number,
+    }),
     messages: PropTypes.array,
     users: PropTypes.array,
   }),
   loading: PropTypes.bool,
   loadMoreEntries: PropTypes.func,
   subscribeToMore: PropTypes.func,
+  updateGroup: PropTypes.func,
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -309,6 +321,30 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
   }),
 });
 
+const updateGroupMutation = graphql(UPDATE_GROUP_MUTATION, {
+  props: ({ mutate }) => ({
+    updateGroup: group =>
+      mutate({
+        variables: { group },
+        update: (store, { data: { updateGroup } }) => {
+          // Read the data from our cache for this query.
+          store.writeFragment({
+            id: `Group:${updateGroup.id}`,
+            fragment: gql`
+              fragment group on Group {
+                unreadCount
+              }
+            `,
+            data: {
+              __typename: 'Group',
+              unreadCount: 0,
+            },
+          });
+        },
+      }),
+  }),
+});
+
 const mapStateToProps = ({ auth }) => ({
   auth,
 });
@@ -317,4 +353,5 @@ export default compose(
   connect(mapStateToProps),
   groupQuery,
   createMessageMutation,
+  updateGroupMutation,
 )(Messages);
