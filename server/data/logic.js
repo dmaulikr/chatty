@@ -47,6 +47,33 @@ export const groupLogic = {
       offset: args.offset,
     });
   },
+  lastRead(group, args, ctx) {
+    return getAuthenticatedUser(ctx)
+      .then(user => user.getLastRead({ where: { groupId: group.id } }))
+      .then((lastRead) => {
+        if (lastRead.length) {
+          return lastRead[0];
+        }
+
+        return null;
+      });
+  },
+  unreadCount(group, args, ctx) {
+    return getAuthenticatedUser(ctx)
+      .then(user => user.getLastRead({ where: { groupId: group.id } }))
+      .then((lastRead) => {
+        if (!lastRead.length) {
+          return Message.count({ where: { groupId: group.id } });
+        }
+
+        return Message.count({
+          where: {
+            groupId: group.id,
+            createdAt: { $gt: lastRead[0].createdAt },
+          },
+        });
+      });
+  },
   query(_, { id }, ctx) {
     return getAuthenticatedUser(ctx).then(user => Group.findOne({
       where: { id },
@@ -109,7 +136,7 @@ export const groupLogic = {
     });
   },
   updateGroup(_, groupInput, ctx) {
-    const { id, name } = groupInput.group;
+    const { id, name, lastRead } = groupInput.group;
 
     return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
       return Group.findOne({
@@ -118,7 +145,16 @@ export const groupLogic = {
           model: User,
           where: { id: user.id },
         }],
-      }).then(group => group.update({ name }));
+      }).then((group) => {
+        if (lastRead) {
+          return user.getLastRead({ where: { groupId: id } })
+            .then(oldLastRead => user.removeLastRead(oldLastRead))
+            .then(user.addLastRead(lastRead))
+            .then(() => group);
+        }
+
+        return group.update({ name });
+      });
     });
   },
 };
