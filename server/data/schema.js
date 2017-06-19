@@ -22,6 +22,7 @@ export const Schema = [`
   # input for updating groups
   input UpdateGroupInput {
     id: Int!
+    lastRead: Int
     name: String
     userIds: [Int!]
   }
@@ -44,6 +45,8 @@ export const Schema = [`
     name: String # name of the group
     users: [User]! # users in the group
     messages(limit: Int, offset: Int): [Message] # messages sent to the group
+    lastRead: Message # message last read by user
+    unreadCount: Int # number of unread messages by user
   }
 
   # a user -- keep type really simple for now
