@@ -18,6 +18,7 @@ export const Schema = [`
     id: Int # optional input for use with updateGroup
     name: String!
     userIds: [Int!]
+    lastRead: Int # optional input for use with updateGroup
   }
 
   # input for creating users or logging in
@@ -33,6 +34,8 @@ export const Schema = [`
     name: String # name of the group
     users: [User]! # users in the group
     messages(limit: Int, offset: Int): [Message] # messages sent to the group
+    lastRead: Message # message last read by user
+    unreadCount: Int # number of unread messages by user
   }
 
   # a user -- keep type really simple for now
