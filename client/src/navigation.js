@@ -145,7 +145,7 @@ const mapStateToProps = ({ auth, nav }) => ({
 const userQuery = graphql(USER_QUERY, {
   skip: ownProps => !ownProps.auth || !ownProps.auth.jwt,
   options: ownProps => ({ variables: { id: ownProps.auth.id } }),
-  props: ({ data: { loading, user, subscribeToMore } }) => ({
+  props: ({ data: { loading, user, subscribeToMore }, ownProps: { nav } }) => ({
     loading,
     user,
     subscribeToMessages() {
@@ -165,11 +165,18 @@ const userQuery = graphql(USER_QUERY, {
             return previousResult;
           }
 
+          const { index, routes } = nav;
+          let unreadCount = previousGroups[groupIndex].unreadCount;
+          if (routes[index].routeName !== 'Messages' || routes[index].params.groupId !== groupIndex) {
+            unreadCount += 1;
+          }
+
           return update(previousResult, {
             user: {
               groups: {
                 [groupIndex]: {
                   messages: { $set: [newMessage] },
+                  unreadCount: { $set: unreadCount },
                 },
               },
             },
