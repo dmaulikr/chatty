@@ -156,7 +156,7 @@ class GroupDetails extends Component {
                 <TouchableOpacity style={styles.groupImageContainer} onPress={this.pickGroupImage}>
                   <Image
                     style={styles.groupImage}
-                    source={{ uri: 'https://facebook.github.io/react/img/logo_og.png' }}
+                    source={{ uri: group.icon || 'https://facebook.github.io/react/img/logo_og.png' }}
                   />
                   <Text>edit</Text>
                 </TouchableOpacity>
