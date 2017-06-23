@@ -132,6 +132,9 @@ export const Resolvers = {
     unreadCount(group, args, ctx) {
       return groupLogic.unreadCount(group, args, ctx);
     },
+    icon(user, args, ctx) {
+      return groupLogic.icon(user, args, ctx);
+    },
   },
   Message: {
     to(message, args, ctx) {
