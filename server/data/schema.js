@@ -7,6 +7,14 @@ export const Schema = [`
   # declare custom scalars
   scalar Date
 
+  # input for file types
+  input File {
+    name: String!
+    type: String!
+    size: Int!
+    path: String!
+  }
+
   # input for creating messages
   input MessageInput {
     groupId: Int!
@@ -19,6 +27,7 @@ export const Schema = [`
     name: String!
     userIds: [Int!]
     lastRead: Int # optional input for use with updateGroup
+    icon: File # group icon image
   }
 
   # input for creating users or logging in
@@ -37,6 +46,7 @@ export const Schema = [`
     messages(limit: Int, offset: Int): [Message] # messages sent to the group
     lastRead: Message # message last read by user
     unreadCount: Int # number of unread messages by user
+    icon: String # url for icon image
   }
 
   # a user -- keep type really simple for now
@@ -50,6 +60,7 @@ export const Schema = [`
     friends: [User] # user's friends/contacts
     jwt: String # json web token for access
     registrationId: String
+    avatar: String # url for avatar image
   }
 
   # a message sent from a user to a group
@@ -81,7 +92,7 @@ export const Schema = [`
     deleteGroup(id: Int!): Group
     leaveGroup(id: Int!): Group # let user leave group
     updateGroup(group: GroupInput!): Group
-    updateUser(registrationId: String, badgeCount: Int): User
+    updateUser(registrationId: String, badgeCount: Int, avatar: File): User
     login(user: UserInput!): User
     signup(user: UserInput!): User
   }
