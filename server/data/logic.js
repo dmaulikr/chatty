@@ -1,6 +1,10 @@
 import { map, filter } from 'lodash';
+import uuidv4 from 'uuid/v4';
+import mime from 'mime-types';
+
 import { Group, Message, User } from './connectors';
 import { sendNotification } from '../notifications';
+import { uploadFile, deleteFile, getSignedFileUrl } from '../files';
 
 // reusable function to check for a user with context
 function getAuthenticatedUser(ctx) {
@@ -114,6 +118,14 @@ export const groupLogic = {
         });
       });
   },
+  icon(group) {
+    if (group.icon) {
+      console.log('getSignedFileUrl for group', group.icon);
+      return getSignedFileUrl({ file: group.icon, options: { Expires: 60 * 60 } });
+    }
+
+    return null;
+  },
   query(_, { id }, ctx) {
     return getAuthenticatedUser(ctx).then(user => Group.findOne({
       where: { id },
@@ -124,7 +136,7 @@ export const groupLogic = {
     }));
   },
   createGroup(_, groupInput, ctx) {
-    const { name, userIds } = groupInput.group;
+    const { name, userIds, icon } = groupInput.group;
 
     return getAuthenticatedUser(ctx)
       .then(user => user.getFriends({ where: { id: { $in: userIds } } })
@@ -134,6 +146,18 @@ export const groupLogic = {
         }).then((group) => {  // eslint-disable-line arrow-body-style
           return group.addUsers([user, ...friends]).then(() => {
             group.users = [user, ...friends];
+
+            if (icon) {
+              return uploadFile({
+                file: icon.path,
+                options: {
+                  name: `${uuidv4()}.${mime.extension(icon.type)}`,
+                  acl: 'private',
+                },
+              })
+                .then(data => group.update({ icon: data.Key }));
+            }
+
             return group;
           });
         });
@@ -150,6 +174,12 @@ export const groupLogic = {
       }).then(group => group.getUsers()
         .then(users => group.removeUsers(users))
         .then(() => Message.destroy({ where: { groupId: group.id } }))
+        .then(() => {
+          if (group.icon) {
+            return deleteFile(group.icon);
+          }
+          return group;
+        })
         .then(() => group.destroy()));
     });
   },
@@ -176,7 +206,7 @@ export const groupLogic = {
     });
   },
   updateGroup(_, groupInput, ctx) {
-    const { id, name, lastRead } = groupInput.group;
+    const { id, name, lastRead, icon } = groupInput.group;
 
     return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
       return Group.findOne({
@@ -191,6 +221,24 @@ export const groupLogic = {
             .then(oldLastRead => user.removeLastRead(oldLastRead))
             .then(user.addLastRead(lastRead))
             .then(() => group);
+        }
+
+        if (icon) {
+          return uploadFile({
+            file: icon.path,
+            options: {
+              name: `${uuidv4()}.${mime.extension(icon.type)}`,
+              acl: 'private', // only group's users should have access
+            },
+          })
+            .then((data) => {
+              if (group.icon) {
+                return deleteFile(group.icon).then(() => data);
+              }
+
+              return data;
+            })
+            .then(data => group.update({ icon: data.Key }));
         }
 
         return group.update({ name });
@@ -260,7 +308,7 @@ export const userLogic = {
       return Promise.reject('Unauthorized');
     });
   },
-  updateUser(_, { badgeCount, registrationId }, ctx) {
+  updateUser(_, { badgeCount, registrationId, avatar }, ctx) {
     return getAuthenticatedUser(ctx).then((user) => {  // eslint-disable-line arrow-body-style
       const options = {};
 
@@ -270,6 +318,24 @@ export const userLogic = {
 
       if (badgeCount || badgeCount === 0) {
         options.badgeCount = badgeCount;
+      }
+
+      if (avatar) {
+        console.log('New avatar', avatar);
+        return uploadFile({
+          file: avatar.path,
+          options: {
+            name: `${uuidv4()}.${mime.extension(avatar.type)}`,
+          },
+        })
+          .then((data) => {
+            if (user.avatar) {
+              return deleteFile(user.avatar).then(() => data);
+            }
+
+            return data;
+          })
+          .then(data => user.update({ avatar: data.Key }));
       }
 
       return user.update(options);
