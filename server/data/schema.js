@@ -52,10 +52,17 @@ export const Schema = [`
     leaveGroup(id: Int!, userId: Int!): Group # let user leave group
     updateGroup(id: Int!, name: String): Group
   }
+
+  type Subscription {
+    # Subscription fires on every message added
+    # for any of the groups with one of these groupIds
+    messageAdded(groupIds: [Int]): Message
+  }
   
   schema {
     query: Query
     mutation: Mutation
+    subscription: Subscription
   }
 `];
 
